@@ -1,110 +1,68 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Button from "../components/Button.jsx";
 import Notice from "../components/Notice.jsx";
 import PageHead from "../components/PageHead.jsx";
-import ScheduleGrid from "../components/ScheduleGrid.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import {
-  closeSession,
-  deleteSession,
-  fetchSession,
-  selectSessionDetail,
-  selectSessionDetailStatus,
+  fetchSessions,
+  selectSessions,
   selectSessionsError,
+  selectSessionsStatus,
 } from "../features/sessions/sessionsSlice.js";
 import { navigate } from "../features/navigation/navigationSlice.js";
 import { formatLongDate, pluralize } from "../utils/format.js";
 
-export default function SessionPage({ id }) {
+export default function SessionsPage() {
   const dispatch = useDispatch();
-  const session = useSelector(selectSessionDetail);
-  const status = useSelector(selectSessionDetailStatus);
-  const loadError = useSelector(selectSessionsError);
-  const [error, setError] = useState(null);
-  const [busy, setBusy] = useState(false);
+  const sessions = useSelector(selectSessions);
+  const status = useSelector(selectSessionsStatus);
+  const error = useSelector(selectSessionsError);
 
   useEffect(() => {
-    if (session?.id !== id) dispatch(fetchSession(id));
-  }, [id, session?.id, dispatch]);
-
-  async function run(thunk, { confirm, then }) {
-    if (confirm && !window.confirm(confirm)) return;
-    setBusy(true);
-    setError(null);
-    const result = await dispatch(thunk);
-    if (result.meta.requestStatus === "fulfilled") {
-      if (then) then();
-    } else {
-      setError(result.payload ?? result.error.message);
-    }
-    setBusy(false);
-  }
-
-  if (status === "failed") return <Notice kind="error">{loadError}</Notice>;
-  if (!session || session.id !== id) return <Notice>Caricamento…</Notice>;
-
-  const isOpen = session.status === "open";
+    if (status === "idle") dispatch(fetchSessions());
+  }, [status, dispatch]);
 
   return (
     <>
       <PageHead
-        title={
-          <span className="flex items-center gap-3">
-            {formatLongDate(session.date)}
-            <StatusBadge session={session} />
-          </span>
-        }
-        subtitle={[
-          pluralize(session.participants.length, "giocatore", "giocatori"),
-          pluralize(session.n_rounds, "turno", "turni"),
-          session.seed !== null && `seme ${session.seed}`,
-        ]
-          .filter(Boolean)
-          .join(" · ")}
+        title="Elenco Sessioni"
         actions={
-          <div className="print-hidden flex gap-2">
-            {isOpen && (
-              <Button
-                disabled={busy}
-                onClick={() =>
-                  run(closeSession(session.id), {
-                    confirm: "Chiudere questa sessione? Non sarà più possibile modificarla.",
-                  })
-                }
-              >
-                Chiudi sessione
-              </Button>
-            )}
-            <Button
-              variant="danger"
-              disabled={busy}
-              onClick={() =>
-                run(deleteSession(session.id), {
-                  confirm: "Eliminare questa sessione? Iscritti e tavoli andranno persi.",
-                  then: () => dispatch(navigate({ name: "sessions" })),
-                })
-              }
-            >
-              Elimina sessione
-            </Button>
-          </div>
+          <Button variant="primary" onClick={() => dispatch(navigate({ name: "new-session" }))}>
+            Nuova sessione
+          </Button>
         }
       />
 
-      {error && <Notice kind="error">{error}</Notice>}
-
-      {session.tables_generated ? (
-        <ScheduleGrid rounds={session.rounds} />
-      ) : (
-        <Notice>
-          <span>Tavoli non ancora generati.</span>
-          {isOpen && (
-            <Button onClick={() => dispatch(navigate({ name: "players" }))}>
-              Vai ai giocatori
-            </Button>
-          )}
-        </Notice>
+      {status === "failed" && (
+        <Notice kind="error">Impossibile caricare le sessioni: {error}</Notice>
+      )}
+      {status === "succeeded" && sessions.length === 0 && (
+        <Notice>Nessuna sessione ancora. Crea la prima con «Nuova sessione».</Notice>
+      )}
+      {sessions.length > 0 && (
+        <ul className="flex max-w-2xl flex-col gap-2">
+          {sessions.map((session) => (
+            <li key={session.id}>
+              <button
+                type="button"
+                onClick={() => dispatch(navigate({ name: "session", id: session.id }))}
+                className="flex w-full flex-col gap-1 rounded-md border border-line bg-white px-4 py-3.5 text-left cursor-pointer hover:border-ink focus-visible:outline-2 focus-visible:outline-felt sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="font-display text-[19px] capitalize">
+                    {formatLongDate(session.date)}
+                  </span>
+                  <StatusBadge session={session} />
+                </span>
+                <span className="text-sm text-muted">
+                  {pluralize(session.n_participants, "giocatore", "giocatori")} ·{" "}
+                  {pluralize(session.n_rounds, "turno", "turni")}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
     </>
   );

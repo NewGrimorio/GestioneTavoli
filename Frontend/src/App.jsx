@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { navigate, selectView } from "./features/navigation/navigationSlice.js";
-import SessionPage from "./pages/SessionPage.jsx";
+import SessionDetailPage from "./pages/SessionDetailPage.jsx";
 import SessionsPage from "./pages/SessionsPage.jsx";
 import NewSessionPage from "./pages/NewSessionPage.jsx";
 import PlayersPage from "./pages/PlayersPage.jsx";
@@ -44,7 +44,7 @@ export default function App() {
         {view.name === "sessions" && <SessionsPage />}
         {view.name === "new-session" && <NewSessionPage />}
         {view.name === "players" && <PlayersPage />}
-        {view.name === "session" && <SessionPage id={view.id} />}
+        {view.name === "session" && <SessionDetailPage id={view.id} />}
       </main>
     </div>
   );

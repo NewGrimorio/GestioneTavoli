@@ -16,7 +16,7 @@ import {
 import { navigate } from "../features/navigation/navigationSlice.js";
 import { formatLongDate, pluralize } from "../utils/format.js";
 
-export default function SessionPage({ id }) {
+export default function SessionDetailPage({ id }) {
   const dispatch = useDispatch();
   const session = useSelector(selectSessionDetail);
   const status = useSelector(selectSessionDetailStatus);

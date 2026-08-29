@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.domain.seating import table_sizes
 from app.models import Evening, EveningKind, Player, Seat
-from app.services.evenings import create_free_evening, get_evening, list_evenings
-from app.services.players import create_player
+from app.services.evenings_service import create_free_evening, get_evening, list_evenings
+from app.services.players_service import create_player
 
 
 def _register(session: Session, n: int) -> list[int]:

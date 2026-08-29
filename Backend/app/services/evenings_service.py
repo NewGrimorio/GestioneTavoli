@@ -80,3 +80,13 @@ def get_evening(session: Session, evening_id: int) -> Evening | None:
 def list_evenings(session: Session) -> list[Evening]:
     """All evenings, most recent first."""
     return list(session.scalars(select(Evening).order_by(Evening.date.desc(), Evening.id.desc())))
+
+
+def delete_evening(session: Session, evening_id: int) -> bool:
+    """Delete an evening with its seating; return ``False`` if it does not exist."""
+    evening = session.get(Evening, evening_id)
+    if evening is None:
+        return False
+    session.delete(evening)
+    session.commit()
+    return True

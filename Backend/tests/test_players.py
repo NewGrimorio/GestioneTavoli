@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.orm import Session
 
-from app.services.players import create_player, list_players
+from app.services.players_service import create_player, list_players
 
 
 def test_create_and_list_sorted(session: Session) -> None:

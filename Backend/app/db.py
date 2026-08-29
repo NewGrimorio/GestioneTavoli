@@ -6,6 +6,7 @@ from pathlib import Path
 
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from app.models import Base
 
@@ -20,11 +21,15 @@ def make_engine(db_path: Path | None = DEFAULT_DB_PATH) -> Engine:
             its parent directory. ``None`` gives an in-memory database (tests).
     """
     if db_path is None:
-        url = "sqlite://"
+        # One shared connection, otherwise every thread would see its own empty DB.
+        engine = create_engine(
+            "sqlite://",
+            poolclass=StaticPool,
+            connect_args={"check_same_thread": False},
+        )
     else:
         db_path.parent.mkdir(parents=True, exist_ok=True)
-        url = f"sqlite:///{db_path}"
-    engine = create_engine(url)
+        engine = create_engine(f"sqlite:///{db_path}")
 
     # SQLite ignores foreign keys unless asked to on every connection.
     @event.listens_for(engine, "connect")

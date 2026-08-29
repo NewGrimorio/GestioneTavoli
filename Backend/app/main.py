@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import DEFAULT_DB_PATH, init_db, make_engine, make_session_factory
-from app.routers import evenings_router, players_router
+from app.routers import players_router, sessions_router
 
 # Vite dev server origins; irrelevant once the frontend is served by the backend itself.
 DEV_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
@@ -32,7 +32,7 @@ def create_app(db_path: Path | None = DEFAULT_DB_PATH) -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(players_router.router, prefix="/api")
-    app.include_router(evenings_router.router, prefix="/api")
+    app.include_router(sessions_router.router, prefix="/api")
 
     @app.get("/api/health", tags=["meta"])
     def health() -> dict[str, str]:

@@ -1,3 +1,23 @@
-from app.models.entities import Base, Evening, EveningKind, GameTable, Player, Round, Seat
+from app.models.entities import (
+    Base,
+    GameTable,
+    Participant,
+    Player,
+    Round,
+    Seat,
+    Session,
+    SessionKind,
+    SessionStatus,
+)
 
-__all__ = ["Base", "Evening", "EveningKind", "GameTable", "Player", "Round", "Seat"]
+__all__ = [
+    "Base",
+    "GameTable",
+    "Participant",
+    "Player",
+    "Round",
+    "Seat",
+    "Session",
+    "SessionKind",
+    "SessionStatus",
+]

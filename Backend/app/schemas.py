@@ -6,7 +6,7 @@ import datetime as dt
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models import EveningKind
+from app.models import SessionKind, SessionStatus
 
 
 class PlayerCreate(BaseModel):
@@ -20,11 +20,17 @@ class PlayerRead(BaseModel):
     name: str
 
 
-class EveningCreate(BaseModel):
-    player_ids: list[int] = Field(min_length=1)
+class SessionCreate(BaseModel):
     n_rounds: int = Field(ge=1, le=20)
-    seed: int | None = None
     date: dt.date | None = None
+
+
+class ParticipantAdd(BaseModel):
+    player_id: int
+
+
+class GenerateTables(BaseModel):
+    seed: int | None = None
 
 
 class TableRead(BaseModel):
@@ -37,15 +43,17 @@ class RoundRead(BaseModel):
     tables: list[TableRead]
 
 
-class EveningSummary(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class SessionSummary(BaseModel):
     id: int
     date: dt.date
-    kind: EveningKind
+    kind: SessionKind
+    status: SessionStatus
     n_rounds: int
-    seed: int
+    seed: int | None
+    n_participants: int
+    tables_generated: bool
 
 
-class EveningRead(EveningSummary):
+class SessionRead(SessionSummary):
+    participants: list[PlayerRead]
     rounds: list[RoundRead]

@@ -16,7 +16,7 @@ Cartelle di primo livello: `Backend/`, `Frontend/`, `docs/` (maiuscole come scel
 Backend/app/domain/    logica pura, zero import da FastAPI o DB, testata con pytest
 Backend/app/models/    entità SQLAlchemy
 Backend/app/services/  orchestrazione dominio + DB (``*_service.py``)
-Backend/app/routers/   solo I/O HTTP, nessuna logica di business (``*_router.py``)
+Backend/app/routers/   solo I/O HTTP, nessuna logica di business (``*_router.py``); dipendenza DB ``get_db``
 Backend/app/schemas.py Pydantic: forme JSON scambiate col frontend
 Backend/app/main.py    application factory ``create_app``
 Backend/app/db.py      engine, session factory, percorso del file SQLite
@@ -40,10 +40,21 @@ Backend/tests/         pytest; DB in memoria tramite fixture ``session``
 
 ## 2026-08-29 — Modello dati
 
+- Terminologia: **sessione** (`Session`) è la serata di gioco; il nome `Evening` usato all'inizio è stato sostituito ovunque (modello, service, router, API `/api/sessions`).
 - `Player(id, name)`: `name` unico, etichetta libera (nome e cognome, oppure username). Nessuna separazione nome/cognome.
-- `Evening(id, date, kind, n_rounds, seed)`: `kind` è `free` o `ranked` fin da subito, anche se ora esiste solo la serata libera. Il `seed` è sempre valorizzato (estratto a caso se non fornito) così ogni serata è rigenerabile.
-- `Round(evening_id, number)` → `GameTable(round_id, number)` → `Seat(table_id, player_id, position)`. `Seat` è la foglia: una riga per giocatore per tavolo; i punti del turno andranno lì.
-- Cancellazione a cascata lungo l'albero della serata; i giocatori non si cancellano se hanno posti a sedere (`RESTRICT`).
+- `Session(id, date, kind, status, n_rounds, seed)`: `kind` è `free` o `ranked` fin da subito, anche se ora esiste solo la sessione libera. `status` è `open` o `closed`. Il `seed` è `None` finché i tavoli non sono generati, poi sempre valorizzato (estratto a caso se non fornito) così la sessione è rigenerabile.
+- `Participant(session_id, player_id)`: chi è iscritto alla sessione, compilato prima della generazione dei tavoli.
+- `Round(session_id, number)` → `GameTable(round_id, number)` → `Seat(table_id, player_id, position)`. `Seat` è la foglia: una riga per giocatore per tavolo; i punti del turno andranno lì.
+- Cancellazione a cascata lungo l'albero della sessione; i giocatori non si cancellano se hanno iscrizioni o posti a sedere (`RESTRICT`): le vecchie sessioni devono restare leggibili con i nomi dell'epoca.
+- Nel codice la sessione SQLAlchemy si chiama `db` (`Session as DbSession`) per non confonderla con l'entità `Session`.
+
+## 2026-08-29 — Ciclo di vita della sessione
+
+- Al massimo una sessione `open` alla volta: crearne una nuova chiude automaticamente la precedente (il frontend avvisa: "La nuova sessione chiuderà automaticamente quella vecchia"). La sessione resta aperta finché non viene chiusa manualmente o sostituita.
+- Flusso: crea sessione (data, turni) → iscrivi i partecipanti (anagrafica esistente o nome nuovo) → "Genera tavoli" (minimo 6 iscritti) → gioca → chiudi.
+- Iscrizioni modificabili solo a sessione aperta e tavoli non ancora generati. Il ritardatario non è previsto: si rifà la sessione.
+- Errori del service: `ValueError` per input non valido (400), `SessionStateError` per operazione non ammessa nello stato corrente (409), `LookupError` per giocatore inesistente (404).
+- Nessuna migrazione DB per ora: a ogni cambio di schema in sviluppo si cancella `Backend/data/serate.db`.
 - Entità `GameTable` invece di `Table` per non collidere con `sqlalchemy.Table`.
 - SQLite con `PRAGMA foreign_keys=ON` forzato a ogni connessione (di default SQLite ignora le foreign key).
 - File DB in `Backend/data/serate.db`, escluso da git. Test su DB in memoria.
@@ -78,5 +89,6 @@ Backend/tests/         pytest; DB in memoria tramite fixture ``session``
 
 ## Aperto
 
+- Anagrafica: "pulisci anagrafica" e una sezione Opzioni. Un giocatore con storia non si cancella, si nasconde (flag `archived`), così le vecchie sessioni restano leggibili.
 - Serata "a criteri" (tavoli per classifica dal turno 2): funzione separata nel dominio, da progettare quando si affronta il punteggio.
 - Packaging desktop: da decidere (PyInstaller + frontend statico servito da FastAPI è l'ipotesi di partenza).

@@ -1,10 +1,11 @@
 """ORM entities.
 
-Tree of an evening:
-    Evening -> Round -> GameTable -> Seat -> Player
+Tree of a session:
+    Session -> Participant -> Player        (who signed up, before tables exist)
+    Session -> Round -> GameTable -> Seat -> Player   (actual seating, once generated)
 
 ``Seat`` is the leaf: one row per player per table. Per-round scores will live
-there when ranked evenings are introduced.
+there when ranked sessions are introduced.
 """
 
 from __future__ import annotations
@@ -20,9 +21,14 @@ class Base(DeclarativeBase):
     pass
 
 
-class EveningKind(enum.StrEnum):
+class SessionKind(enum.StrEnum):
     FREE = "free"
     RANKED = "ranked"
+
+
+class SessionStatus(enum.StrEnum):
+    OPEN = "open"
+    CLOSED = "closed"
 
 
 class Player(Base):
@@ -34,34 +40,65 @@ class Player(Base):
     name: Mapped[str] = mapped_column(String(80), unique=True, nullable=False)
 
 
-class Evening(Base):
-    __tablename__ = "evenings"
+class Session(Base):
+    """One game night. At most one session is ``OPEN`` at any time."""
+
+    __tablename__ = "sessions"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     date: Mapped[dt.date] = mapped_column(Date, nullable=False)
-    kind: Mapped[EveningKind] = mapped_column(Enum(EveningKind), nullable=False)
+    kind: Mapped[SessionKind] = mapped_column(Enum(SessionKind), nullable=False)
+    status: Mapped[SessionStatus] = mapped_column(Enum(SessionStatus), nullable=False)
     n_rounds: Mapped[int] = mapped_column(Integer, nullable=False)
-    # Seed used to generate the seating; always stored so a schedule can be replayed.
-    seed: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Seed used to generate the seating; ``None`` until tables are generated,
+    # then always stored so a schedule can be replayed.
+    seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
+    participants: Mapped[list[Participant]] = relationship(
+        back_populates="session",
+        cascade="all, delete-orphan",
+        order_by="Participant.id",
+    )
     rounds: Mapped[list[Round]] = relationship(
-        back_populates="evening",
+        back_populates="session",
         cascade="all, delete-orphan",
         order_by="Round.number",
     )
 
+    @property
+    def tables_generated(self) -> bool:
+        return len(self.rounds) > 0
+
+
+class Participant(Base):
+    """A player signed up for a session."""
+
+    __tablename__ = "participants"
+    __table_args__ = (UniqueConstraint("session_id", "player_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    session_id: Mapped[int] = mapped_column(
+        ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False
+    )
+    player_id: Mapped[int] = mapped_column(
+        ForeignKey("players.id", ondelete="RESTRICT"), nullable=False
+    )
+
+    session: Mapped[Session] = relationship(back_populates="participants")
+    player: Mapped[Player] = relationship()
+
 
 class Round(Base):
     __tablename__ = "rounds"
-    __table_args__ = (UniqueConstraint("evening_id", "number"),)
+    __table_args__ = (UniqueConstraint("session_id", "number"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    evening_id: Mapped[int] = mapped_column(
-        ForeignKey("evenings.id", ondelete="CASCADE"), nullable=False
+    session_id: Mapped[int] = mapped_column(
+        ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False
     )
     number: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    evening: Mapped[Evening] = relationship(back_populates="rounds")
+    session: Mapped[Session] = relationship(back_populates="rounds")
     tables: Mapped[list[GameTable]] = relationship(
         back_populates="round",
         cascade="all, delete-orphan",

@@ -29,7 +29,7 @@ export default function App() {
                 type="button"
                 aria-current={active ? "page" : undefined}
                 onClick={() => dispatch(navigate({ name }))}
-                className={`rounded-md px-3 py-1.5 cursor-pointer focus-visible:outline-2 focus-visible:outline-felt ${
+                className={`rounded-md px-3 py-1.5 cursor-pointer focus-visible:outline-2 focus-visible:outline-cardback ${
                   active ? "bg-ink text-white" : "text-muted hover:text-ink"
                 }`}
               >

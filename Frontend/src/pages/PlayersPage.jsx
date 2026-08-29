@@ -233,7 +233,7 @@ function ParticipantList({ participants, onRemove }) {
           <span>{player.name}</span>
           {onRemove && (
             <Button
-              variant="quiet"
+              variant="remove"
               aria-label={`Togli ${player.name}`}
               onClick={() => onRemove(player.id)}
             >

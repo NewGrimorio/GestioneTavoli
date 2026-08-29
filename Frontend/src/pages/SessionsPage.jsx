@@ -47,7 +47,7 @@ export default function SessionsPage() {
               <button
                 type="button"
                 onClick={() => dispatch(navigate({ name: "session", id: session.id }))}
-                className="flex w-full flex-col gap-1 rounded-md border border-line bg-white px-4 py-3.5 text-left cursor-pointer hover:border-ink focus-visible:outline-2 focus-visible:outline-felt sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                className="flex w-full flex-col gap-1 rounded-md border border-line bg-white px-4 py-3.5 text-left cursor-pointer hover:border-ink focus-visible:outline-2 focus-visible:outline-cardback sm:flex-row sm:items-center sm:justify-between sm:gap-4"
               >
                 <span className="flex items-center gap-3">
                   <span className="font-display text-[19px] capitalize">

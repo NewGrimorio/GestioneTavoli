@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+/* Project tokens, registered with Tailwind so they become utilities
+   (bg-felt, text-muted, border-line, font-display, ...). */
+@theme {
+  --color-paper: #eef0ea;
+  --color-ink: #1c201e;
+  --color-muted: #667069;
+  --color-line: #d3d8cf;
+  --color-felt: #245c3a;
+  --color-felt-dark: #1b4a2d;
+  --color-danger: #a4322b;
+  --font-display: Georgia, "Times New Roman", serif;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media print {
+  .print-hidden {
+    display: none !important;
+  }
+}

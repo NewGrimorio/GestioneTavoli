@@ -57,6 +57,19 @@ Backend/tests/         pytest; DB in memoria tramite fixture ``session``
 - CORS aperto solo agli origin del dev server Vite; sparirà quando il backend servirà il frontend compilato.
 - Test API con `TestClient` (richiede `httpx`, solo in dev).
 
+## 2026-08-29 — Frontend
+
+- React 19 + Vite, JavaScript, componenti funzionali con hook. ESLint con la configurazione del template Vite.
+- **Redux Toolkit** (`configureStore`, `createSlice`, `createAsyncThunk`) per lo stato condiviso: scelta didattica, allineata ai corsi seguiti dall'autore. Tre slice: `navigation` (schermata corrente), `players`, `evenings`. Lo stato locale dei form resta in `useState`. Nessun router: la navigazione è nello slice `navigation`.
+- **Tailwind CSS v4** tramite plugin Vite; token del progetto (colori, font display) definiti in `@theme` dentro `src/index.css`, così le utility hanno nomi parlanti (`bg-felt`, `text-muted`).
+- Struttura: `src/app/store.js`, `src/features/<nome>/<nome>Slice.js`, `src/api/client.js` (unico punto che parla col backend), `src/pages/*Page.jsx`, `src/components/`, `src/utils/`.
+- In sviluppo Vite gira su `:5173` e inoltra `/api` a uvicorn su `:8000`; il codice usa sempre URL relativi, così non cambia quando il backend servirà il build statico.
+- Solo font di sistema: l'app deve funzionare offline e impacchettata.
+- La griglia della serata riproduce il foglio Excel del gruppo: una riga per turno con linguetta colorata (arancio/giallo/verde come l'originale, poi altri colori a ciclo), una scheda per tavolo, tavoli da 3 con bordo tratteggiato.
+- `utils/tables.js` replica `table_sizes` solo per l'anteprima "N tavoli da 4 e M da 3" prima di creare la serata; il backend resta l'unica fonte di verità.
+- Testi dell'interfaccia in italiano; date formattate con `Intl` in `it-IT`.
+- Express valutato e scartato: sarebbe un secondo backend accanto a FastAPI.
+
 ## 2026-08-29 — Convenzioni
 
 - Comandi Python sempre nella forma `python -m pip` / `python -m pytest`: su Windows gli eseguibili in `.venv/Scripts` possono essere bloccati dall'antivirus.
